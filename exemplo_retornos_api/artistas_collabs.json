@@ -1,0 +1,32 @@
+[
+   {
+      "external_urls":{
+         "spotify":"https://open.spotify.com/artist/1yYkeH8fDEJY4bJtlUseKK"
+      },
+      "href":"https://api.spotify.com/v1/artists/1yYkeH8fDEJY4bJtlUseKK",
+      "id":"1yYkeH8fDEJY4bJtlUseKK",
+      "name":"Town Portal",
+      "type":"artist",
+      "uri":"spotify:artist:1yYkeH8fDEJY4bJtlUseKK"
+   },
+   {
+      "external_urls":{
+         "spotify":"https://open.spotify.com/artist/5o2zQEbRyODSRSJqjwjpyr"
+      },
+      "href":"https://api.spotify.com/v1/artists/5o2zQEbRyODSRSJqjwjpyr",
+      "id":"5o2zQEbRyODSRSJqjwjpyr",
+      "name":"Lisa Marie Vogel",
+      "type":"artist",
+      "uri":"spotify:artist:5o2zQEbRyODSRSJqjwjpyr"
+   },
+   {
+      "external_urls":{
+         "spotify":"https://open.spotify.com/artist/7AX99u8730DEVFGt9YWySw"
+      },
+      "href":"https://api.spotify.com/v1/artists/7AX99u8730DEVFGt9YWySw",
+      "id":"7AX99u8730DEVFGt9YWySw",
+      "name":"Nicole Hogstrand",
+      "type":"artist",
+      "uri":"spotify:artist:7AX99u8730DEVFGt9YWySw"
+   }
+]

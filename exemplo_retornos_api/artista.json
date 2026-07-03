@@ -1,0 +1,23 @@
+{
+    "external_urls": 
+        {
+            "spotify": "https://open.spotify.com/artist/2Wya1Moi5k4EX1dRpCf4Dm"
+        }, 
+    "href": "https://api.spotify.com/v1/artists/2Wya1Moi5k4EX1dRpCf4Dm", 
+    "id": "2Wya1Moi5k4EX1dRpCf4Dm", 
+    "images": 
+        [
+            {
+                "url": "https://i.scdn.co/image/ab6761610000e5eb32c16ce847de69dcf64eac1f", "height": 640, "width": 640
+            }, 
+            {
+                "url": "https://i.scdn.co/image/ab6761610000517432c16ce847de69dcf64eac1f", "height": 320, "width": 320
+            }, 
+            {
+                "url": "https://i.scdn.co/image/ab6761610000f17832c16ce847de69dcf64eac1f", "height": 160, "width": 160
+            }
+        ], 
+    "name": "Exemplo", 
+    "type": "artist", 
+    "uri": "spotify:artist:2Wya1Moi5k4EX1dRpCf4Dm"
+}
