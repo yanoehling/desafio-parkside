@@ -1,49 +1,28 @@
 import os
-from dotenv import load_dotenv
 import requests
 import base64
-import time
-
-load_dotenv()
-CLIENT_ID = os.environ['CLIENT_ID']
-CLIENT_SECRET = os.environ['CLIENT_SECRET']
 
 
-def codificar(c_id, c_secret):
-    string_original = c_id + ':' + c_secret
-    string_em_bytes = string_original.encode('ascii')
-    bytes_base64 = base64.b64encode(string_em_bytes)
-    base64_em_ascii = bytes_base64.decode('ascii')
-    return base64_em_ascii
+def pegar_token_api_propria():
+    uri = 'https://yanmano.pythonanywhere.com/'
     
-
-def pegar_token_json():
-    uri = 'https://accounts.spotify.com/api/token'
-    
-    dados_criptografados = codificar(CLIENT_ID, CLIENT_SECRET)
-    headers = { 'Authorization': f'Basic {dados_criptografados}',
-                'Content-Type': 'application/x-www-form-urlencoded' }
-    data = { 'grant_type': f'client_credentials' }
-    
-    res = requests.post(uri, headers=headers, data=data)
-
-    if res.status_code == 429:
-        tempo_espera = int(res.headers.get('Retry-After', 5))
-        print(f"Limite de requisições (429) atingido. Aguarde {tempo_espera} segundos antes de tentar de novo...")
-    if res.status_code != 200:
-        print(f"Erro na requisição: {uri}")
-        print(f"Status: {res.status_code}")
-        try:
-            print(f"Mensagem da API: {res.json()}")
-        except:
-            print(f"Mensagem da API: {res.text}") # Se não for JSON, printa o texto puro para não quebrar
+    try:
+        res = requests.get(uri, timeout=10)
+        if res.status_code == 200:
+            print("Sucesso (200): Conectado na micro API e Token recebido.")
+            return res.json()
+        else:
+            print("Erro na micro API de token. Status:", res.status_code)
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Erro de conexão com a micro API: {e}")
         return None
 
-    print(f"Sucesso (200): {uri}")
-    return res.json()
 
-
-def limpar_tabelas(tabelas):
+def limpar_tabelas(tabelas, saida_json_final):
     for tabela in tabelas:
         if os.path.exists(tabela):
             os.remove(tabela)
+    if os.path.exists(saida_json_final):
+        os.remove(saida_json_final)

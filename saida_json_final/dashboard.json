@@ -1,0 +1,20 @@
+{
+    "artista": "Moto Perpétuo",
+    "lancamentos": {
+        "total": 1,
+        "albuns": 1,
+        "singles_eps": 0,
+        "media_faixas_album": 11.0,
+        "duracao_media_album_seg": 2260,
+        "duracao_media_album": "0h37m40s",
+        "data_primeiro_lancamento": "1974",
+        "data_lancamento_mais_recente": "1974"
+    },
+    "musicas": {
+        "total": 11,
+        "com_colaboracao": 0,
+        "duracao_media_seg": 205.5,
+        "duracao_media": "3m25s"
+    },
+    "quant_artistas_colaboradores": 0
+}

@@ -4,38 +4,60 @@ import time
 
 
 url_base = 'https://api.spotify.com'
+limite_busca_artistas = 10
+limite_musicas_p_lancamento = 50
 
 
 def fazer_requisicao_get(uri, headers):
+    tentativa = 0
     while True:
-        res = requests.get(uri, headers=headers)
+        try:
+            res = requests.get(uri, headers=headers, timeout=10)
+        except requests.exceptions.RequestException as e:
+            print(f"Erro de conexão: {e}")
+            return None
         
         if res.status_code == 429:
-            tempo_espera = int(res.headers.get('Retry-After', 5))
-            print(f"Limite de requisições (429) atingido. Aguardando {tempo_espera} segundos antes de tentar de novo...")
-            time.sleep(tempo_espera)
+            tentativa += 1
+            tempo_espera_str = res.headers.get('Retry-After')
+            
+            # Se a API fornecer Retry-After, usamos. Senão, backoff exponencial (2, 4, 8, 16s...)
+            if tempo_espera_str:
+                espera_final = int(tempo_espera_str)
+            else:
+                espera_final = 2 ** tentativa
+                
+            print(f"Limite de requisições (429). Aguardando {espera_final}s (Tentativa {tentativa})...")
+            
+            # Trava de Segurança: Evita que o código hiberne por 20h (cota diária estourada)
+            if espera_final > 300:
+                print("\n[ERRO CRÍTICO] A espera pedida pela API é gigantesca (Cota Diária estourada).")
+                print("Encerrando esta etapa para não travar o computador.")
+                return None
+                
+            time.sleep(espera_final)
             continue
         if res.status_code != 200:
-            print(f"Erro na requisição: {uri}")
+            print(f"Erro na req: {uri}")
             print(f"Status: {res.status_code}")
             try:
                 print(f"Mensagem da API: {res.json()}")
             except:
-                print(f"Mensagem da API: {res.text}") # Se não for JSON, printa o texto puro para não quebrar
+                print(f"Mensagem da API: {res.text}")
             return None
             
         print(f"Sucesso (200): {uri}")
-        time.sleep(0.4) # BLINDAGEM MÁXIMA: Espera 0.4s entre todas as requisições, não importa o que aconteça
+        time.sleep(0.4) 
         return res.json()
 
 
 def procurar_artista(nome_artista, token):
-    uri = url_base + f'/v1/search?q={nome_artista}&type=artist'
+    uri = url_base + f'/v1/search?q={nome_artista}&type=artist' + f'&limit={limite_busca_artistas}'
     headers = { 'Authorization': f'Bearer {token}' }
     return fazer_requisicao_get(uri, headers)
 
 
-def proc_dados_artista(json_artista, arquivo_saida):
+def trat_dados_artista(json_artista, arquivo_saida):
     tabela_artista = pandas.DataFrame({
         'id': [json_artista['id']],
         'nome': [json_artista['name']],
@@ -46,8 +68,7 @@ def proc_dados_artista(json_artista, arquivo_saida):
 
 
 def proc_dados_lancamentos(id_artista, token, arquivo_saida):
-    # BLINDAGEM 2: Filtrar apenas álbuns e singles do próprio artista (ignorar compilações e centenas de participações pequenas que inflam o rate limit)
-    uri = url_base + f'/v1/artists/{id_artista}/albums' + '?include_groups=album,single' + '&limit=50'
+    uri = url_base + f'/v1/artists/{id_artista}/albums' + '?include_groups=album,single'
     ids, nomes, datas, tipos, totais_de_faixas = [], [], [], [], []
     while uri:
         headers = { 'Authorization': f'Bearer {token}' }
@@ -75,29 +96,22 @@ def proc_dados_lancamentos(id_artista, token, arquivo_saida):
     return ids
 
 
-def proc_todas_musicas(ids_lancamentos, id_artista_princ, token, arquivo_musicas, arquivo_relacao, arquivo_artista):
+def proc_todas_musicas(ids_lancamentos, id_artista_princ, token, 
+                       arquivo_musicas, arquivo_relacao, arquivo_artista):
     ids_lanc_musicas, ids_musicas, nomes, duracoes = [], [], [], []
     cruzam_id_musica, cruzam_id_artista, cruzam_tipo = [], [], []
     novos_artistas_id, novos_artistas_nome, novos_artistas_link = [], [], []
 
-    # Fatiar a lista de álbuns em lotes de 20 (limite da API do Spotify)
-    for i in range(0, len(ids_lancamentos), 20):
-        lote_ids = ids_lancamentos[i:i + 20]
-        ids_juntos = ",".join(lote_ids)
-        uri = url_base + f'/v1/albums?ids={ids_juntos}'
+    for id_lanc in ids_lancamentos:
+        uri = url_base + f'/v1/albums/{id_lanc}/tracks' + f'?limit={limite_musicas_p_lancamento}'
 
-        headers = { 'Authorization': f'Bearer {token}' }
-        res_json = fazer_requisicao_get(uri, headers)
-        if res_json == None or 'albums' not in res_json:
-            continue
+        while uri:
+            headers = { 'Authorization': f'Bearer {token}' }
+            res_json = fazer_requisicao_get(uri, headers)
+            if res_json == None:
+                break
 
-        for album in res_json['albums']:
-            if not album: # Prevenção caso a API retorne nulo para algum ID
-                continue
-            
-            id_lanc = album['id']
-            # O endpoint /v1/albums já traz as faixas em album['tracks']['items']
-            for musica in album['tracks']['items']:
+            for musica in res_json['items']:
                 ids_lanc_musicas.append(id_lanc)
                 ids_musicas.append(musica['id'])
                 nomes.append(musica['name'])
@@ -105,17 +119,20 @@ def proc_todas_musicas(ids_lancamentos, id_artista_princ, token, arquivo_musicas
                 duracao_s = round(musica['duration_ms'] / 1000)
                 duracoes.append(duracao_s)
 
-                for artista in musica['artists']:
-                    cruzam_id_musica.append(musica['id'])
-                    cruzam_id_artista.append(artista['id'])
-                    if artista['id'] == id_artista_princ:
-                        cruzam_tipo.append("Principal")
-                    else:
-                        cruzam_tipo.append("Colaborador")
-                        if artista['id'] not in novos_artistas_id:
-                            novos_artistas_id.append(artista['id'])
-                            novos_artistas_nome.append(artista['name'])
-                            novos_artistas_link.append(artista['external_urls']['spotify'])
+                if len(musica['artists']) > 1:
+                    for artista in musica['artists']:
+                        cruzam_id_musica.append(musica['id'])
+                        cruzam_id_artista.append(artista['id'])
+                        if artista['id'] == id_artista_princ:
+                            cruzam_tipo.append("Principal")
+                        else:
+                            cruzam_tipo.append("Colaborador")
+                            if artista['id'] not in novos_artistas_id:
+                                novos_artistas_id.append(artista['id'])
+                                novos_artistas_nome.append(artista['name'])
+                                novos_artistas_link.append(artista['external_urls']['spotify'])
+
+            uri = res_json.get('next')
 
     tabela_musicas = pandas.DataFrame({
         'id_lancamento': ids_lanc_musicas,
@@ -137,7 +154,8 @@ def proc_todas_musicas(ids_lancamentos, id_artista_princ, token, arquivo_musicas
             'nome': novos_artistas_nome,
             'link_spotify': novos_artistas_link
         })
-        tabela_novos_artistas.to_csv(arquivo_artista, mode='a', header=False, index=False, sep=';', encoding='utf-8-sig')
+        tabela_novos_artistas.to_csv(arquivo_artista, mode='a', header=False, 
+                                     index=False, sep=';', encoding='utf-8-sig')
     
     return ids_musicas
 
