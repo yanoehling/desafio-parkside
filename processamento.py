@@ -20,19 +20,12 @@ def fazer_requisicao_get(uri, headers):
         if res.status_code == 429:
             tentativa += 1
             tempo_espera_str = res.headers.get('Retry-After')
-            
-            # Se a API fornecer Retry-After, usamos. Senão, backoff exponencial (2, 4, 8, 16s...)
             if tempo_espera_str:
                 espera_final = int(tempo_espera_str)
-            else:
-                espera_final = 2 ** tentativa
-                
             print(f"Limite de requisições (429). Aguardando {espera_final}s (Tentativa {tentativa})...")
-            
-            # Trava de Segurança: Evita que o código hiberne por 20h (cota diária estourada)
             if espera_final > 300:
-                print("\n[ERRO CRÍTICO] A espera pedida pela API é gigantesca (Cota Diária estourada).")
-                print("Encerrando esta etapa para não travar o computador.")
+                print("\n(ERRO CRÍTICO) A espera pedida pela API é muit grande (Cota Diária estourada).")
+                print("Encerrando para não travar o computador.")
                 return None
                 
             time.sleep(espera_final)
@@ -96,8 +89,7 @@ def proc_dados_lancamentos(id_artista, token, arquivo_saida):
     return ids
 
 
-def proc_todas_musicas(ids_lancamentos, id_artista_princ, token, 
-                       arquivo_musicas, arquivo_relacao, arquivo_artista):
+def proc_todas_musicas(ids_lancamentos, id_artista_princ, token, arquivo_musicas, arquivo_relacao, arquivo_artista):
     ids_lanc_musicas, ids_musicas, nomes, duracoes = [], [], [], []
     cruzam_id_musica, cruzam_id_artista, cruzam_tipo = [], [], []
     novos_artistas_id, novos_artistas_nome, novos_artistas_link = [], [], []
@@ -154,8 +146,7 @@ def proc_todas_musicas(ids_lancamentos, id_artista_princ, token,
             'nome': novos_artistas_nome,
             'link_spotify': novos_artistas_link
         })
-        tabela_novos_artistas.to_csv(arquivo_artista, mode='a', header=False, 
-                                     index=False, sep=';', encoding='utf-8-sig')
+        tabela_novos_artistas.to_csv(arquivo_artista, mode='a', header=False, index=False, sep=';', encoding='utf-8-sig')
     
     return ids_musicas
 

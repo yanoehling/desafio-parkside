@@ -4,32 +4,42 @@ import json
 
 def gerar_pseudo_dashboard(todas_tabelas, saida_json_final):
     tabela_artista, tabela_lancamento, tabela_musica, tabela_relacao = todas_tabelas
-    # lê tabelas
+    #lê tabelas
     tabela_artista = pandas.read_csv(tabela_artista, sep=';', encoding='utf-8-sig')
     tabela_lancamentos = pandas.read_csv(tabela_lancamento, sep=';', encoding='utf-8-sig')
     tabela_musicas = pandas.read_csv(tabela_musica, sep=';', encoding='utf-8-sig')
     tabela_relacao = pandas.read_csv(tabela_relacao, sep=';', encoding='utf-8-sig')
+
+    #artista
+    if not tabela_artista.empty:
+        nome_principal = tabela_artista.iloc[0]['nome'] 
+        link_spotify = tabela_artista.iloc[0]['link_spotify']
+    else:
+        nome_principal = "Desconhecido"
+        link_spotify = "N/A"
     
+    #collabs
     qtd_artistas_collabs = len(tabela_artista) - 1
     musicas_collab = tabela_relacao[tabela_relacao['tipo'] == 'Colaborador']['id_musica'].nunique()
     
+    #lancamentos
     qtd_lancamentos = len(tabela_lancamentos)
-
-    ids_albuns = tabela_lancamentos[tabela_lancamentos['tipo'] == 'album']['id']
-    qtd_albuns = len(ids_albuns)
+    tabela_albuns = tabela_lancamentos[tabela_lancamentos['tipo'] == 'album']
+    qtd_albuns = len(tabela_albuns)
     qtd_singles = len(tabela_lancamentos[tabela_lancamentos['tipo'].isin(['single', 'ep'])])
     qtd_musicas = len(tabela_musicas)
     
-    media_faixas_calc = tabela_lancamentos['total_faixas'].mean()
+    #médias de quantidades
+    media_faixas_calc = tabela_albuns['total_faixas'].mean()
     media_faixas = round(float(media_faixas_calc), 1) if not pandas.isna(media_faixas_calc) else 0.0
     
+    #médias de duracoes
     media_duracao_musica = tabela_musicas['duracao_s'].mean()
     if pandas.isna(media_duracao_musica):
         media_duracao_musica = 0.0
     media_s_musica = round(float(media_duracao_musica), 1)
     media_m_musica = str(int(media_s_musica // 60)) +'m'+ str(int(media_s_musica % 60)) +'s'
-
-    musicas_de_albuns = tabela_musicas[tabela_musicas['id_lancamento'].isin(ids_albuns)]
+    musicas_de_albuns = tabela_musicas[tabela_musicas['id_lancamento'].isin(tabela_albuns['id'])]
     media_segundos_album = int(musicas_de_albuns.groupby('id_lancamento')['duracao_s'].sum().mean())
 
     if pandas.isna(media_segundos_album):
@@ -40,13 +50,14 @@ def gerar_pseudo_dashboard(todas_tabelas, saida_json_final):
     segundos_a = int(media_segundos_album % 60)
     media_duracao_album = f"{horas_a}h{minutos_a}m{segundos_a}s"
 
+    #datas
     primeiro_lancamento = str(tabela_lancamentos['data'].min()) if not tabela_lancamentos.empty else "N/A"
     ultimo_lancamento = str(tabela_lancamentos['data'].max()) if not tabela_lancamentos.empty else "N/A"
-
-    nome_principal = tabela_artista.iloc[0]['nome'] if not tabela_artista.empty else "Desconhecido"
     
+    #estrutura final
     dashboard_dict = {
         'artista': nome_principal,
+        'link_spotify': link_spotify,
         'lancamentos': {
             'total': qtd_lancamentos,
             'albuns': qtd_albuns,

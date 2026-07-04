@@ -1,20 +1,21 @@
 {
-    "artista": "Moto Perpétuo",
+    "artista": "Ave Sangria",
+    "link_spotify": "https://open.spotify.com/artist/1q3J12DzCpwW0EwLrKlXvC",
     "lancamentos": {
-        "total": 1,
-        "albuns": 1,
-        "singles_eps": 0,
-        "media_faixas_album": 11.0,
-        "duracao_media_album_seg": 2260,
-        "duracao_media_album": "0h37m40s",
-        "data_primeiro_lancamento": "1974",
-        "data_lancamento_mais_recente": "1974"
+        "total": 3,
+        "albuns": 2,
+        "singles_eps": 1,
+        "media_faixas_album": 11.5,
+        "duracao_media_album_seg": 2748,
+        "duracao_media_album": "0h45m48s",
+        "data_primeiro_lancamento": "1974-05-01",
+        "data_lancamento_mais_recente": "2020-01-30"
     },
     "musicas": {
-        "total": 11,
+        "total": 24,
         "com_colaboracao": 0,
-        "duracao_media_seg": 205.5,
-        "duracao_media": "3m25s"
+        "duracao_media_seg": 239.2,
+        "duracao_media": "3m59s"
     },
     "quant_artistas_colaboradores": 0
 }

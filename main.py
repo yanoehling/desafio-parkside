@@ -23,6 +23,9 @@ def main():
 
     nome_artista = input("\nDigite o nome do artista desejado para buscá-lo: ")
     artistas_similares = procurar_artista(nome_artista, token)
+    if not artistas_similares:
+        print("\nErro ao buscar artista na API. Verifique a sua conexão.")
+        return
     itens_artistas = artistas_similares.get('artists', {}).get('items', [])
     if not itens_artistas:
         print("\nNenhum artista encontrado com esse nome, ou erro na API. Encerrando.")
